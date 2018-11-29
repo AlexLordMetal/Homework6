@@ -16,10 +16,6 @@ namespace FantasyBattle
             FactionsRandomizer(factions);
             //ConsoleBattleOneOnOne(factions);
             ConsoleBattleSquadOnSquad(factions);
-            Console.ReadKey();
-            ConsoleBattleSquadOnSquad(factions);
-            Console.ReadKey();
-            ConsoleBattleSquadOnSquad(factions);
             ConsoleReport(factions);
             Console.ReadKey();
         }
@@ -180,7 +176,7 @@ namespace FantasyBattle
             int damage = AttackPower(attacker);
             defender.HP -= damage;
 
-            Console.Write($"\t{attacker.Name} атаковал {defender.Name}, нанеся {damage} урона.");
+            Console.Write($"\t{attacker.Name} атаковал {defender.Name}, нанеся {damage} урона. ");
             if (defender.HP > 0) Console.WriteLine($"У {defender.Name} осталось {defender.HP} HP.");
             else Console.WriteLine($"{defender.Name} погиб.");
             
