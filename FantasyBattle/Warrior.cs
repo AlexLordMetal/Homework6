@@ -10,6 +10,7 @@ namespace FantasyBattle
     {
         private int hp;
 
+        public int ID { get; set; }
         public string Name { get; set; }
         public int HP
         {
@@ -28,21 +29,17 @@ namespace FantasyBattle
 
         public Warrior(string name)
         {
-            var rnd = new Random();
-
             Name = name;
             HP = 50 + ForBattle.Random(1, 30);
             ATK = 6 + ForBattle.Random(1, 6);
-            STR = 1 + ForBattle.Random(5);
+            STR = 1 + ForBattle.Random(4);
         }
 
         public Warrior()
         {
-            var rnd = new Random();
-
-            HP = 50 + rnd.Next(1, 31);
-            ATK = 6 + rnd.Next(1, 7);
-            STR = 1 + rnd.Next(0, 5);
+            HP = 50 + ForBattle.Random(1, 30);
+            ATK = 6 + ForBattle.Random(1, 6);
+            STR = 1 + ForBattle.Random(4);
         }
 
     }

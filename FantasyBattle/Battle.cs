@@ -9,7 +9,17 @@ namespace FantasyBattle
 {
     public class Battle
     {
+
         public void Start()
+        {
+            var factions = CreateMiddleEarth();
+            FactionsRandomizer(factions);
+            ConsoleBattleOneOnOne(factions);
+            ConsoleReport(factions);
+            Console.ReadKey();
+        }
+
+        public List<Faction> CreateMiddleEarth()
         {
             var factions = new List<Faction>();
 
@@ -22,14 +32,8 @@ namespace FantasyBattle
             elfs.Squads.Add(new Squad("Нолдор"));
             elfs.Squads.Add(new Squad("Телери"));
             factions.Add(elfs);
-                                 
-            FactionsRandomizer(factions);
 
-            var winner = BattleOneOnOne(SelectRandomWarrior(factions, 0, out var firstWarriorIndexes), SelectRandomWarrior(factions, 1, out var secondWarriorIndexes));
-            Console.Write(BattleOneOnOneReport(factions, firstWarriorIndexes, secondWarriorIndexes, winner));
-                        
-            Console.Write(Report(factions));
-            Console.ReadKey();
+            return factions;
         }
 
         public void FactionsRandomizer(List<Faction> factions)
@@ -58,7 +62,6 @@ namespace FantasyBattle
                         }
                     }
                 }
-
             }
         }
 
@@ -80,54 +83,74 @@ namespace FantasyBattle
             return names;
         }
 
-        public string Report(List<Faction> factions)
+        public void ConsoleReport(List<Faction> factions)
         {
-            var output = "Отчет по фракциям.\n";
+            Console.WriteLine("Отчет по фракциям.");
             foreach (var faction in factions)
             {
-                output += $"\nВ фракции \"{faction.Name}\" {faction.Squads.Count} отряда:\n";
+                Console.WriteLine($"\nВ фракции \"{faction.Name}\" {faction.Squads.Count} отряда:");
                 foreach (var squad in faction.Squads)
                 {
-                    output += $"\n   В отряде \"{squad.Name}\" {squad.Warriors.Count} воинов:\n";
-                    foreach (var warrior in squad.Warriors)
-                    {
-                        output += $"\t{WarriorReport(warrior)}\n";
-                    }                    
+                    Console.WriteLine($"\n   В отряде \"{squad.Name}\" {squad.Warriors.Count} воинов:");
+                    SquadConsoleReport(squad);
                 }
             }
-            return output;
         }
 
-        public string WarriorReport(Warrior warrior)
+        public void SquadConsoleReport(Squad squad)
         {
-            return $"{warrior.Name} (HP: {warrior.HP}, ATK: {warrior.ATK}, STR: {warrior.STR})";
+            foreach (var warrior in squad.Warriors)
+            {
+                Console.Write("\t");
+                WarriorConsoleReport(warrior);
+                Console.WriteLine();
+            }
         }
 
-        public string BattleOneOnOneReport(List<Faction> factions, int[] firstWarriorIndexes, int[] secondWarriorIndexes, Warrior winnerWarrior)
+        public void WarriorConsoleReport(Warrior warrior)
         {
-            return $"Сражались воин {WarriorReport(factions[firstWarriorIndexes[0]].Squads[firstWarriorIndexes[1]].Warriors[firstWarriorIndexes[2]])} " +
-                $"из отряда \"{factions[firstWarriorIndexes[0]].Squads[firstWarriorIndexes[1]].Name}\" из фракции \"{factions[firstWarriorIndexes[0]].Name}\" " +
-                $"и воин {WarriorReport(factions[secondWarriorIndexes[0]].Squads[secondWarriorIndexes[1]].Warriors[secondWarriorIndexes[2]])} " +
-                $"из отряда \"{factions[secondWarriorIndexes[0]].Squads[secondWarriorIndexes[1]].Name}\" из фракции \"{factions[secondWarriorIndexes[0]].Name}\".\n" +
-                $"Победил воин {winnerWarrior.Name} (осталось HP: {winnerWarrior.HP})!\n\n";
+            Console.Write($"{warrior.Name} (HP: {warrior.HP}, ATK: {warrior.ATK}, STR: {warrior.STR})");
         }
 
-        public Warrior SelectRandomWarrior(List<Faction> factions, int factionIndex, out int[] warriorIndexes)
+        public void ConsoleBattleOneOnOne(List<Faction> factions)
+        {
+            var firstWarriorIndexes = SelectRandomWarrior(factions, 0);
+            var firstWarrior = factions[firstWarriorIndexes[0]].Squads[firstWarriorIndexes[1]].Warriors[firstWarriorIndexes[2]];
+            var secondWarriorIndexes = SelectRandomWarrior(factions, 1);
+            var secondWarrior = factions[secondWarriorIndexes[0]].Squads[secondWarriorIndexes[1]].Warriors[secondWarriorIndexes[2]];
+
+            Console.WriteLine($"Сражались:");
+            Console.Write("   ");
+            WarriorConsoleReport(firstWarrior);
+            Console.WriteLine($" из отряда \"{factions[firstWarriorIndexes[0]].Squads[firstWarriorIndexes[1]].Name}\" из фракции \"{factions[firstWarriorIndexes[0]].Name}\"");
+            Console.Write("   ");
+            WarriorConsoleReport(secondWarrior);
+            Console.WriteLine($" из отряда \"{factions[secondWarriorIndexes[0]].Squads[secondWarriorIndexes[1]].Name}\" из фракции \"{factions[secondWarriorIndexes[0]].Name}\"");
+
+            var winnerWarrior = BattleOneOnOne(factions, firstWarrior, secondWarrior);
+
+            Console.WriteLine($"Победил {winnerWarrior.Name} (осталось HP: {winnerWarrior.HP})!\n");
+        }
+
+        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex, int squadIndex)
+        {
+            var warriorIndex = ForBattle.Random(factions[factionIndex].Squads[squadIndex].Warriors.Count - 1);
+            return new int[] { factionIndex, squadIndex, warriorIndex };
+        }
+
+        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex)
         {
             var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
-            var warriorIndex = ForBattle.Random(factions[factionIndex].Squads[squadIndex].Warriors.Count - 1);
-            warriorIndexes = new int[3] {factionIndex, squadIndex, warriorIndex};
-            return factions[factionIndex].Squads[squadIndex].Warriors[warriorIndex];
+            return SelectRandomWarrior(factions, factionIndex, squadIndex);
         }
 
-        public Warrior SelectRandomWarrior(List<Faction> factions, int factionIndex)
+        public int[] SelectRandomWarrior(List<Faction> factions)
         {
-            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
-            var warriorIndex = ForBattle.Random(factions[factionIndex].Squads[squadIndex].Warriors.Count - 1);
-            return factions[factionIndex].Squads[squadIndex].Warriors[warriorIndex];
+            var factionIndex = ForBattle.Random(factions.Count - 1);
+            return SelectRandomWarrior(factions, factionIndex);
         }
 
-        public Warrior BattleOneOnOne(Warrior firstWarrior, Warrior secondWarrior)
+        public Warrior BattleOneOnOne(List<Faction> factions, Warrior firstWarrior, Warrior secondWarrior)
         {
             while (firstWarrior.HP != 0 && secondWarrior.HP != 0)
             {
@@ -137,11 +160,7 @@ namespace FantasyBattle
                     firstWarrior.HP -= Attack(secondWarrior);
                 }
             }
-            if (firstWarrior.HP == 0)
-            {
-                
-            }
-
+            CorpseCollector(factions);
             return firstWarrior.HP == 0 ? secondWarrior : firstWarrior;
         }
 
@@ -149,5 +168,62 @@ namespace FantasyBattle
         {
             return ForBattle.Random(1, warrior.ATK) + warrior.STR;
         }
+
+        private void CorpseCollector(List<Faction> factions)
+        {
+            foreach (var faction in factions)
+            {
+                foreach (var squad in faction.Squads)
+                {
+                    for (int warriorIndex = 0; warriorIndex < squad.Warriors.Count; warriorIndex++)
+                    {
+                        if (squad.Warriors[warriorIndex].HP == 0)
+                        {
+                            squad.Warriors.RemoveAt(warriorIndex);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        public void ConsoleBattleSquadOnSquad(List<Faction> factions)
+        {
+            var firstSquadIndexes = SelectRandomSquad(factions, 0);
+            var firstSquad = factions[firstSquadIndexes[0]].Squads[firstSquadIndexes[1]];
+            var secondSquadIndexes = SelectRandomSquad(factions, 1);
+            var secondSquad = factions[secondSquadIndexes[0]].Squads[secondSquadIndexes[1]];
+
+            Console.WriteLine($"Сражались:");
+            Console.WriteLine($"   Отряд \"{factions[firstSquadIndexes[0]].Squads[firstSquadIndexes[1]].Name}\" из фракции \"{factions[firstSquadIndexes[0]].Name}\"");
+            SquadConsoleReport(firstSquad);
+            Console.WriteLine();
+            Console.WriteLine($"   Отряд \"{factions[secondSquadIndexes[0]].Squads[secondSquadIndexes[1]].Name}\" из фракции \"{factions[secondSquadIndexes[0]].Name}\"");
+            SquadConsoleReport(secondSquad);
+
+            var winnerSquad = BattleSquadOnSquad(factions, firstSquad, secondSquad);
+
+            Console.WriteLine($"Герои из отряда {winnerSquad.Name}:");
+            SquadConsoleReport(winnerSquad);
+            Console.WriteLine();
+        }
+
+        public int[] SelectRandomSquad(List<Faction> factions, int factionIndex)
+        {
+            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
+            return new int[] { factionIndex, squadIndex };
+        }
+
+        public int[] SelectRandomSquad(List<Faction> factions)
+        {
+            var factionIndex = ForBattle.Random(factions.Count - 1);
+            return SelectRandomSquad(factions, factionIndex);
+        }
+
+        //public Squad BattleSquadOnSquad(List<Faction> factions, Squad firstSquad, Squad secondSquad)
+        //{
+
+        //    return firstSquad.Warriors.Count == 0 ? secondSquad : firstSquad;
+        //}
     }
 }
