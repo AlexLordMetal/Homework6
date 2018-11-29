@@ -26,6 +26,7 @@ namespace FantasyBattle
         }
         public int ATK { get; set; }
         public int STR { get; set; }
+        public WarriorClass Class { get; set; }
 
         public Warrior(string name)
         {
@@ -33,6 +34,7 @@ namespace FantasyBattle
             HP = 50 + ForBattle.Random(1, 30);
             ATK = 6 + ForBattle.Random(1, 6);
             STR = 1 + ForBattle.Random(4);
+            Class = WarriorClass.Normal;
         }
 
         public Warrior()
@@ -40,6 +42,7 @@ namespace FantasyBattle
             HP = 50 + ForBattle.Random(1, 30);
             ATK = 6 + ForBattle.Random(1, 6);
             STR = 1 + ForBattle.Random(4);
+            Class = WarriorClass.Normal;
         }
 
     }

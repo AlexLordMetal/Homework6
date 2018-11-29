@@ -50,6 +50,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Squad.cs" />
     <Compile Include="Warrior.cs" />
+    <Compile Include="WarriorClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

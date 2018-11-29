@@ -15,7 +15,7 @@ namespace FantasyBattle
             var factions = CreateMiddleEarth();
             FactionsRandomizer(factions);
             //ConsoleBattleOneOnOne(factions);
-            ConsoleBattleSquadOnSquad(factions);
+            //ConsoleBattleSquadOnSquad(factions);
             ConsoleReport(factions);
             Console.ReadKey();
         }
@@ -38,30 +38,29 @@ namespace FantasyBattle
         }
 
         public void FactionsRandomizer(List<Faction> factions)
-        {
-            var elfNames = ReadFromFile("ElfNames.txt");
-            var orcNames = ReadFromFile("OrcNames.txt");
-            var defaultNames = ReadFromFile("DefaultNames.txt");
-
+        {            
             foreach (var faction in factions)
             {
+                var factionNames = new List<string>();
+                switch (faction.Name.ToLower())
+                {
+                    case "эльфы":
+                        factionNames = ReadFromFile("ElfNames.txt");
+                        break;
+                    case "орки":
+                        factionNames = ReadFromFile("OrcNames.txt");
+                        break;
+                    default:
+                        factionNames = ReadFromFile("DefaultNames.txt");
+                        break;
+                }
                 for (int squadIndex = 0; squadIndex < faction.Squads.Count; squadIndex++)
                 {
                     for (int warriorIndex = 0; warriorIndex < 10; warriorIndex++)
                     {
-                        switch (faction.Name.ToLower())
-                        {
-                            case "эльфы":
-                                faction.Squads[squadIndex].Warriors.Add(WarriorRandomizer(elfNames));
-                                break;
-                            case "орки":
-                                faction.Squads[squadIndex].Warriors.Add(WarriorRandomizer(orcNames));
-                                break;
-                            default:
-                                faction.Squads[squadIndex].Warriors.Add(WarriorRandomizer(defaultNames));
-                                break;
-                        }
+                        faction.Squads[squadIndex].Warriors.Add(WarriorRandomizer(factionNames));
                     }
+                    ClassRandomizer(faction.Squads[squadIndex]);
                 }
             }
         }
@@ -69,6 +68,37 @@ namespace FantasyBattle
         public Warrior WarriorRandomizer(List<string> names)
         {
             return new Warrior(names[ForBattle.Random(0, names.Count - 1)]);
+        }
+
+        public void ClassRandomizer(Squad squad)
+        {
+            var counter = 1;
+            while (counter < Enum.GetNames(typeof(WarriorClass)).Length)
+            {
+                var warriorIndex = ForBattle.Random(squad.Warriors.Count - 1);
+                if (squad.Warriors[warriorIndex].Class == WarriorClass.Normal)
+                {
+                    squad.Warriors[warriorIndex].Class = (WarriorClass)counter;
+                    counter++;
+                }
+            }
+        }
+
+        private string WarriorClassRus(WarriorClass warriorClass)
+        {
+            switch (warriorClass)
+            {
+                case WarriorClass.Berserk:
+                    return "Берсерк";
+                case WarriorClass.Priest:
+                    return "Прист";
+                case WarriorClass.Mage:
+                    return "Маг";
+                case WarriorClass.Warrior:
+                    return "Воин";
+                default:
+                    return "";
+            }
         }
 
         private List<string> ReadFromFile(string fileName)
@@ -92,7 +122,7 @@ namespace FantasyBattle
                 Console.WriteLine($"\nВ фракции \"{faction.Name}\" {faction.Squads.Count} отряда:");
                 foreach (var squad in faction.Squads)
                 {
-                    Console.WriteLine($"\n   В отряде \"{squad.Name}\" {squad.Warriors.Count} воинов");
+                    Console.WriteLine($"\n   В отряде \"{squad.Name}\" {squad.Warriors.Count} бойцов");
                     SquadConsoleReport(squad);
                 }
             }
@@ -110,7 +140,7 @@ namespace FantasyBattle
 
         public void WarriorConsoleReport(Warrior warrior)
         {
-            Console.Write($"{warrior.Name} (HP: {warrior.HP}, ATK: {warrior.ATK}, STR: {warrior.STR})");
+            Console.Write($"{WarriorClassRus(warrior.Class)} {warrior.Name} (HP: {warrior.HP}, ATK: {warrior.ATK}, STR: {warrior.STR})");
         }
 
         public void ConsoleBattleOneOnOne(List<Faction> factions)
