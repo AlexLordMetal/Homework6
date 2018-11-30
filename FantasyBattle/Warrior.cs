@@ -10,7 +10,6 @@ namespace FantasyBattle
     {
         private int hp;
 
-        public int ID { get; set; }
         public string Name { get; set; }
         public int HP
         {
@@ -27,6 +26,8 @@ namespace FantasyBattle
         public int ATK { get; set; }
         public int STR { get; set; }
         public WarriorClass Class { get; set; }
+        public int BetweenAbility { get; set; }
+        public int AbilityRecoveryCounter { get; set; }
 
         public Warrior(string name)
         {
