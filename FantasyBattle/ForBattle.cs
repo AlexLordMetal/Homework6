@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FantasyBattle
 {
@@ -10,11 +6,22 @@ namespace FantasyBattle
     {
         private static Random randomizer = new Random();
 
+        /// <summary>
+        /// Returns random int number.
+        /// </summary>
+        /// <param name="lower">The inclusive lower bound of the random number</param>
+        /// <param name="higher">The inclusive upper bound of the random number</param>
+        /// <returns></returns>
         public static int Random(int lower, int higher)
         {
             return randomizer.Next(lower, higher + 1);
         }
 
+        /// <summary>
+        /// Returns non-negative random int number.
+        /// </summary>
+        /// <param name="higher">The inclusive upper bound of the random number</param>
+        /// <returns></returns>
         public static int Random(int higher)
         {
             return Random(0, higher);

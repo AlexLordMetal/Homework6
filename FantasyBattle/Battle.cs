@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FantasyBattle
 {
@@ -14,22 +11,25 @@ namespace FantasyBattle
 
         public void Start()
         {
-            Console.Write("Введите количество отрядов в каждой фракции: ");
-            FactionAmount = ForBattle.ConditionParse();
-            Console.Write("Введите базовое количество воинов в каждом отряде: ");
-            SquadAmount = ForBattle.ConditionParse();
-
             var factions = CreateMiddleEarth();
             FactionsRandomizer(factions);
-            ConsoleReport(factions);
-            //ConsoleBattleOneOnOne(factions);
-            //ConsoleFactionsBattle(factions);
+            AddFactionFeatures(factions);
             //ConsoleReport(factions);
+            //ConsoleBattleOneOnOne(factions);
+            ConsoleFactionsBattle(factions);
+            ConsoleFactionsBattle(factions);
+            ConsoleReport(factions);
             Console.ReadKey();
         }
 
         public List<Faction> CreateMiddleEarth()
         {
+            Console.Write("Введите количество отрядов в каждой фракции: ");
+            FactionAmount = ForBattle.ConditionParse();
+            Console.Write("Введите базовое количество бойцов в каждом отряде: ");
+            SquadAmount = ForBattle.ConditionParse();
+            Console.Clear();
+
             var factions = new List<Faction>();
             factions.Add(new Faction("Орки"));
             factions.Add(new Faction("Эльфы"));
@@ -40,13 +40,12 @@ namespace FantasyBattle
         {
             foreach (var faction in factions)
             {
-                var factionNames = new List<string>();
+                var factionNames = ReadFromFile(faction.Name);
                 for (int squadIndex = 0; squadIndex < FactionAmount; squadIndex++)
                 {
                     switch (faction.Name.ToLower())
                     {
                         case "эльфы":
-                            factionNames = ReadFromFile("ElfNames.txt");
                             switch (squadIndex)
                             {
                                 case 0:
@@ -59,12 +58,11 @@ namespace FantasyBattle
                                     faction.Squads.Add(new Squad("Ваниар"));
                                     break;
                                 default:
-                                    faction.Squads.Add(new Squad($"Отряд {squadIndex} эльфов"));
+                                    faction.Squads.Add(new Squad($"{squadIndex + 1} отряд эльфов"));
                                     break;
                             }
                             break;
                         case "орки":
-                            factionNames = ReadFromFile("OrcNames.txt");
                             switch (squadIndex)
                             {
                                 case 0:
@@ -77,13 +75,12 @@ namespace FantasyBattle
                                     faction.Squads.Add(new Squad("Урук-Хай"));
                                     break;
                                 default:
-                                    faction.Squads.Add(new Squad($"Отряд {squadIndex} орков"));
+                                    faction.Squads.Add(new Squad($"{squadIndex + 1} отряд орков"));
                                     break;
                             }
                             break;
                         default:
-                            factionNames = ReadFromFile("DefaultNames.txt");
-                            faction.Squads.Add(new Squad($"Отряд {squadIndex} faction.Name"));
+                            faction.Squads.Add(new Squad($"{squadIndex + 1} отряд {faction.Name.ToLower()}"));
                             break;
                     }
 
@@ -101,6 +98,46 @@ namespace FantasyBattle
             return new Warrior(names[ForBattle.Random(0, names.Count - 1)]);
         }
 
+        private void AddFactionFeatures(List<Faction> factions)
+        {
+            int firstFactionIndex = ForBattle.Random(1);
+            int secondFactionIndex = firstFactionIndex == 0 ? 1 : 0;
+
+            AddFactionWarriors(factions[firstFactionIndex]);
+            AddFactionClasses(factions[secondFactionIndex]);
+        }
+
+        private void AddFactionWarriors(Faction faction)
+        {
+            var factionNames = ReadFromFile(faction.Name);
+            if ((Enum.GetNames(typeof(WarriorClass)).Length - 1) < faction.Squads[0].Warriors.Count)
+            {
+                foreach (var squad in faction.Squads)
+                {
+                    squad.Warriors.Add(WarriorRandomizer(factionNames));
+                }
+            }
+        }
+
+        private void AddFactionClasses(Faction faction)
+        {
+            foreach (var squad in faction.Squads)
+            {
+                var classesAmount = Enum.GetNames(typeof(WarriorClass)).Length - 1;
+                WarriorClass randomClass = (WarriorClass)ForBattle.Random(1, classesAmount);
+                var classAdded = false;
+                while (!classAdded && classesAmount < squad.Warriors.Count)
+                {
+                    var warrior = squad.Warriors[ForBattle.Random(squad.Warriors.Count - 1)];
+                    if (warrior.Class == WarriorClass.Normal)
+                    {
+                        AddClassAbility(warrior, randomClass);
+                        classAdded = true;
+                    }
+                }
+            }
+        }
+
         public void ClassRandomizer(Squad squad)
         {
             var counter = 1;
@@ -109,27 +146,32 @@ namespace FantasyBattle
                 var warrior = squad.Warriors[ForBattle.Random(squad.Warriors.Count - 1)];
                 if (warrior.Class == WarriorClass.Normal)
                 {
-                    switch ((WarriorClass)counter)
-                    {
-                        case WarriorClass.Berserk:
-                            AddBerserkAbility(warrior);
-                            break;
-                        case WarriorClass.Priest:
-                            AddPriestAbility(warrior);
-                            break;
-                        case WarriorClass.Mage:
-                            AddMageAbility(warrior);
-                            break;
-                        case WarriorClass.Warrior:
-                            AddWarriorAbility(warrior);
-                            break;
-                    }
+                    AddClassAbility(warrior, (WarriorClass)counter);
                     counter++;
                 }
             }
         }
 
-        public void AddBerserkAbility(Warrior warrior)
+        public void AddClassAbility(Warrior warrior, WarriorClass warriorClass)
+        {
+            switch (warriorClass)
+            {
+                case WarriorClass.Berserk:
+                    AddBerserkAbility(warrior);
+                    break;
+                case WarriorClass.Priest:
+                    AddPriestAbility(warrior);
+                    break;
+                case WarriorClass.Mage:
+                    AddMageAbility(warrior);
+                    break;
+                case WarriorClass.Warrior:
+                    AddWarriorAbility(warrior);
+                    break;
+            }
+        }
+
+        private void AddBerserkAbility(Warrior warrior)
         {
             warrior.Class = WarriorClass.Berserk;
             warrior.BetweenAbility = 4;
@@ -137,7 +179,7 @@ namespace FantasyBattle
             warrior.Name = "Берсерк " + warrior.Name;
         }
 
-        public void AddPriestAbility(Warrior warrior)
+        private void AddPriestAbility(Warrior warrior)
         {
             warrior.Class = WarriorClass.Priest;
             warrior.BetweenAbility = 4;
@@ -145,7 +187,7 @@ namespace FantasyBattle
             warrior.Name = "Прист " + warrior.Name;
         }
 
-        public void AddMageAbility(Warrior warrior)
+        private void AddMageAbility(Warrior warrior)
         {
             warrior.Class = WarriorClass.Mage;
             warrior.BetweenAbility = 4;
@@ -153,7 +195,7 @@ namespace FantasyBattle
             warrior.Name = "Маг " + warrior.Name;
         }
 
-        public void AddWarriorAbility(Warrior warrior)
+        private void AddWarriorAbility(Warrior warrior)
         {
             warrior.Class = WarriorClass.Warrior;
             warrior.BetweenAbility = -1;
@@ -161,26 +203,22 @@ namespace FantasyBattle
             warrior.Name = "Воин " + warrior.Name;
         }
 
-        private string WarriorClassRus(WarriorClass warriorClass)
-        {
-            switch (warriorClass)
-            {
-                case WarriorClass.Berserk:
-                    return "Берсерк ";
-                case WarriorClass.Priest:
-                    return "Прист ";
-                case WarriorClass.Mage:
-                    return "Маг ";
-                case WarriorClass.Warrior:
-                    return "Воин ";
-                default:
-                    return "";
-            }
-        }
-
-        private List<string> ReadFromFile(string fileName)
+        private List<string> ReadFromFile(string factionName)
         {
             var names = new List<string>();
+            var fileName = "";
+            switch (factionName.ToLower())
+            {
+                case "эльфы":
+                    fileName = "ElfNames.txt";
+                    break;
+                case "орки":
+                    fileName = "OrcNames.txt";
+                    break;
+                default:
+                    fileName = "DefaultNames.txt";
+                    break;
+            }
             using (var reader = new StreamReader(fileName))
             {
                 while (!reader.EndOfStream)
@@ -236,52 +274,14 @@ namespace FantasyBattle
             Console.WriteLine($" из отряда \"{factions[secondWarriorIndexes[0]].Squads[secondWarriorIndexes[1]].Name}\" из фракции \"{factions[secondWarriorIndexes[0]].Name}\"");
             Console.WriteLine();
 
-            var winnerWarrior = BattleOneOnOne(factions, firstWarrior, secondWarrior);
-
-            Console.WriteLine($"\nПобедил {winnerWarrior.Name} (осталось HP: {winnerWarrior.HP})\n");
-        }
-
-        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex, int squadIndex)
-        {
-            var warriorIndex = ForBattle.Random(factions[factionIndex].Squads[squadIndex].Warriors.Count - 1);
-            return new int[] { factionIndex, squadIndex, warriorIndex };
-        }
-
-        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex)
-        {
-            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
-            return SelectRandomWarrior(factions, factionIndex, squadIndex);
-        }
-
-        public int[] SelectRandomWarrior(List<Faction> factions)
-        {
-            var factionIndex = ForBattle.Random(factions.Count - 1);
-            return SelectRandomWarrior(factions, factionIndex);
-        }
-
-        public Warrior BattleOneOnOne(List<Faction> factions, Warrior firstWarrior, Warrior secondWarrior)
-        {
-            while (firstWarrior.HP != 0 && secondWarrior.HP != 0)
-            {
-                ConsoleNormalAttack(firstWarrior, secondWarrior);
-                if (secondWarrior.HP > 0)
-                {
-                    ConsoleNormalAttack(secondWarrior, firstWarrior);
-                }
-            }
+            Console.WriteLine("ЛЕТОПИСЬ СРАЖЕНИЯ:");
+            var winnerWarrior = BattleOneOnOne(firstWarrior, secondWarrior);
+            ChargeClassAbilities(factions);
             CorpseCollector(factions);
-            return firstWarrior.HP == 0 ? secondWarrior : firstWarrior;
-        }
 
-        private void CorpseCollector(List<Faction> factions)
-        {
-            foreach (var faction in factions)
-            {
-                foreach (var squad in faction.Squads)
-                {
-                    CorpseCollector(squad);
-                }
-            }
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"\nПобедил {winnerWarrior.Name} (осталось HP: {winnerWarrior.HP})\n");
+            Console.ResetColor();            
         }
 
         public void ConsoleBattleSquadOnSquad(List<Faction> factions, int firstFactionSquadIndex, int secondFactionSquadIndex)
@@ -290,9 +290,9 @@ namespace FantasyBattle
             var secondSquad = factions[1].Squads[secondFactionSquadIndex];
 
             Console.WriteLine($"Сражаются отряды:");
-            Console.WriteLine($"   Отряд \"{factions[0].Squads[firstFactionSquadIndex].Name}\" из фракции \"{factions[0].Name}\"");
+            Console.WriteLine($"   Отряд \"{firstSquad.Name}\" из фракции \"{factions[0].Name}\"");
             SquadConsoleReport(firstSquad);
-            Console.WriteLine($"\n   Отряд \"{factions[0].Squads[firstFactionSquadIndex].Name}\" из фракции \"{factions[0].Name}\"");
+            Console.WriteLine($"\n   Отряд \"{secondSquad.Name}\" из фракции \"{factions[1].Name}\"");
             SquadConsoleReport(secondSquad);
             Console.WriteLine();
 
@@ -307,16 +307,58 @@ namespace FantasyBattle
             Console.WriteLine();
         }
 
-        public int[] SelectRandomSquad(List<Faction> factions, int factionIndex)
+        public void ConsoleFactionsBattle(List<Faction> factions)
         {
-            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
-            return new int[] { factionIndex, squadIndex };
+            var firstFactionSquadIndex = FactionNotEmpty(factions[0]);
+            var secondFactionSquadIndex = FactionNotEmpty(factions[1]);
+
+            if (firstFactionSquadIndex == -1 || secondFactionSquadIndex == -1)
+            {
+                Console.WriteLine("Не с кем сражаться. Одна из фракций (или обе) пуста.");
+            }
+            else
+            {
+                Console.WriteLine($"Фракция \"{factions[0].Name}\" сражается с фракцией \"{factions[1].Name}\":\n");
+                while (firstFactionSquadIndex != -1 && secondFactionSquadIndex != -1)
+                {
+                    ConsoleBattleSquadOnSquad(factions, firstFactionSquadIndex, secondFactionSquadIndex);
+                    firstFactionSquadIndex = FactionNotEmpty(factions[0]);
+                    secondFactionSquadIndex = FactionNotEmpty(factions[1]);
+                }
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                if (FactionNotEmpty(factions[0]) != -1) Console.WriteLine($"Победила фракция \"{factions[0].Name}\"!\n");
+                else Console.WriteLine($"Победила фракция \"{factions[1].Name}\"!\n");
+                Console.ResetColor();
+            }
         }
 
-        public int[] SelectRandomSquad(List<Faction> factions)
+        public Warrior BattleOneOnOne(Warrior firstWarrior, Warrior secondWarrior)
         {
-            var factionIndex = ForBattle.Random(factions.Count - 1);
-            return SelectRandomSquad(factions, factionIndex);
+            var firstSquad = new Squad();
+            firstSquad.Warriors.Add(firstWarrior);
+
+            var secondSquad = new Squad();
+            secondSquad.Warriors.Add(secondWarrior);
+
+            while (firstWarrior.HP != 0 && secondWarrior.HP != 0)
+            {
+                ClassAttack(firstSquad, 0, secondSquad, 0);
+                if (secondWarrior.HP > 0)
+                {
+                    ClassAttack(secondSquad, 0, firstSquad, 0);
+                }
+
+                if (firstWarrior.AbilityRecoveryCounter < firstWarrior.BetweenAbility)
+                {
+                    firstWarrior.AbilityRecoveryCounter++;
+                }
+                if (secondWarrior.AbilityRecoveryCounter < secondWarrior.BetweenAbility)
+                {
+                    secondWarrior.AbilityRecoveryCounter++;
+                }
+
+            }
+            return firstWarrior.HP == 0 ? secondWarrior : firstWarrior;
         }
 
         public Squad BattleSquadOnSquad(Squad firstSquad, Squad secondSquad)
@@ -347,146 +389,6 @@ namespace FantasyBattle
                 secondSquadWarrior = IfEndTurn(secondSquad, ref secondWarriorStepCounter, ref secondSquadWarriorIndex);
             }
             return firstSquad.Warriors.Count == 0 ? secondSquad : firstSquad;
-        }
-
-        private void ChargeClassAbilities(List<Faction> factions)
-        {
-            foreach (var faction in factions)
-            {
-                foreach (var squad in faction.Squads)
-                {
-                    foreach (var warrior in squad.Warriors)
-                    {
-                        warrior.AbilityRecoveryCounter = warrior.BetweenAbility;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Faster version of CorpseCollector. Collects corps only in current squad.
-        /// </summary>
-        /// <param name="factions"></param>
-        private void CorpseCollector(Squad squad)
-        {
-            for (int warriorIndex = 0; warriorIndex < squad.Warriors.Count; warriorIndex++)
-            {
-                if (squad.Warriors[warriorIndex].HP == 0)
-                {
-                    squad.Warriors.RemoveAt(warriorIndex);
-                }
-            }
-        }
-
-        private Warrior IfEndTurn(Squad squad, ref int warriorStepCounter, ref int squadWarriorIndex)
-        {
-            if (warriorStepCounter == 2)
-            {
-                warriorStepCounter = 0;
-                if (squad.Warriors[squadWarriorIndex].AbilityRecoveryCounter < squad.Warriors[squadWarriorIndex].BetweenAbility)
-                {
-                    squad.Warriors[squadWarriorIndex].AbilityRecoveryCounter++;
-                }
-                IncreaseSquadWarriorIndex(squad, ref squadWarriorIndex);
-            }
-            return squad.Warriors[squadWarriorIndex];
-        }
-
-        private Warrior IfDied(Squad squad, ref int warriorStepCounter, ref int squadWarriorIndex)
-        {
-            if (squad.Warriors[squadWarriorIndex].HP > 0)
-            {
-                return IfEndTurn(squad, ref warriorStepCounter, ref squadWarriorIndex);
-            }
-            else
-            {
-                CorpseCollector(squad);
-                if (squad.Warriors.Count > 0)
-                {
-                    warriorStepCounter = 0;
-                    VerifySquadWarriorIndex(squad, ref squadWarriorIndex);
-                    return squad.Warriors[squadWarriorIndex];
-                }
-                else return null;
-            }
-        }
-
-        private Warrior IfSomeoneDied(Squad squad, ref int warriorStepCounter, ref int squadWarriorIndex)
-        {
-            var corpseIndexes = SquadCorpseIndexes(squad);
-            if (corpseIndexes.Count == 0)
-            {
-                return IfEndTurn(squad, ref warriorStepCounter, ref squadWarriorIndex);
-            }
-            else if (corpseIndexes.Count == squad.Warriors.Count)
-            {
-                CorpseCollector(squad);
-                return null;
-            }
-            else
-            {
-                foreach (var index in corpseIndexes)
-                {
-                    if (index < squadWarriorIndex)
-                    {
-                        DecreaseSquadWarriorIndex(squad, ref squadWarriorIndex);
-                    }
-                    else if (index == squadWarriorIndex)
-                    {
-                        warriorStepCounter = 0;
-                        CorpseCollector(squad);
-                        VerifySquadWarriorIndex(squad, ref squadWarriorIndex);
-                        return squad.Warriors[squadWarriorIndex];
-                    }
-                    else break;
-                }
-                CorpseCollector(squad);
-                return IfEndTurn(squad, ref warriorStepCounter, ref squadWarriorIndex);
-            }
-        }
-
-        private List<int> SquadCorpseIndexes(Squad squad)
-        {
-            var corpseIndexes = new List<int>();
-            for (int index = 0; index < squad.Warriors.Count; index++)
-            {
-                if (squad.Warriors[index].HP == 0)
-                {
-                    corpseIndexes.Add(index);
-                }
-            }
-            return corpseIndexes;
-        }
-
-        private void IncreaseSquadWarriorIndex(Squad squad, ref int warriorIndex)
-        {
-            if (warriorIndex < squad.Warriors.Count - 1) warriorIndex++;
-            else warriorIndex = 0;
-        }
-
-        private void DecreaseSquadWarriorIndex(Squad squad, ref int warriorIndex)
-        {
-            if (warriorIndex > 0) warriorIndex--;
-            else warriorIndex = squad.Warriors.Count - 1;
-        }
-
-        private void VerifySquadWarriorIndex(Squad squad, ref int warriorIndex)
-        {
-            if (warriorIndex > squad.Warriors.Count - 1) warriorIndex = 0;
-        }
-
-        private int AttackPower(Warrior warrior)
-        {
-            return ForBattle.Random(1, warrior.ATK) + warrior.STR;
-        }
-
-        private void ConsoleNormalAttack(Warrior attacker, Warrior defender)
-        {
-            int damage = AttackPower(attacker);
-
-            Console.Write($"\t{attacker.Name} атаковал {defender.Name}, нанеся {damage} урона. ");
-
-            ConsoleDefend(defender, damage);
         }
 
         private void ClassAttack(Squad attackerSquad, int attackerIndex, Squad defenderSquad, int defenderIndex)
@@ -528,11 +430,10 @@ namespace FantasyBattle
                     attacker.AbilityRecoveryCounter = 0;
 
                     HighlightTextSpecial();
-                    Console.Write($"{attacker.Name} атаковал классовым умением (дополнительной атакой) {defender.Name}, нанеся {damage} урона. ");
+                    Console.Write($"{attacker.Name} дополнительно атакует противника с малым здоровьем (меньше 10) {defender.Name}, нанося {damage} урона. ");
 
                     ConsoleDefend(defender, damage);
                 }
-
             }
         }
 
@@ -568,7 +469,7 @@ namespace FantasyBattle
                 attacker.AbilityRecoveryCounter = 0;
 
                 HighlightTextSpecial();
-                Console.WriteLine($"{attacker.Name} атаковал файерболом следующих противников, нанеся им по {damage} урона:");
+                Console.WriteLine($"{attacker.Name} атакует файерболом следующих противников, нанося им по {damage} урона:");
 
                 if (defenderSquad.Warriors.Count > 2)
                 {
@@ -597,15 +498,26 @@ namespace FantasyBattle
                 var defender = FindMinHPWarrior(defenderSquad);
                 var damage = AttackPower(attacker);
 
-                Console.Write($"\t{attacker.Name} атаковал противника с наименьшим здоровьем {defender.Name}, нанеся {damage} урона. ");
+                Console.Write($"\t{attacker.Name} атакует противника с наименьшим здоровьем {defender.Name}, нанося {damage} урона. ");
 
                 ConsoleDefend(defender, damage);
             }
         }
 
-        /// <summary>
-        ///Only for Warrior ability now
-        /// </summary>
+        private void ConsoleNormalAttack(Warrior attacker, Warrior defender)
+        {
+            int damage = AttackPower(attacker);
+
+            Console.Write($"\t{attacker.Name} атакует {defender.Name}, нанося {damage} урона. ");
+
+            ConsoleDefend(defender, damage);
+        }
+
+        private int AttackPower(Warrior warrior)
+        {
+            return ForBattle.Random(1, warrior.ATK) + warrior.STR;
+        }
+
         private void ConsoleDefend(Warrior defender, int damage)
         {
             if (defender.Class == WarriorClass.Warrior && defender.AbilityRecoveryCounter == defender.BetweenAbility)
@@ -613,15 +525,116 @@ namespace FantasyBattle
                 defender.AbilityRecoveryCounter = 0;
 
                 HighlightTextSpecial();
-                Console.WriteLine($"{defender.Name} увернулся от атаки.");
+                Console.WriteLine($"{defender.Name} уворачивается от атаки.");
             }
             else
             {
                 defender.HP -= damage;
 
-                if (defender.HP > 0) Console.WriteLine($"У {defender.Name} осталось {defender.HP} HP.");
+                if (defender.HP > 0) Console.WriteLine($"У {defender.Name} остается {defender.HP} HP.");
                 else HighlightTextDied(defender.Name);
             }
+        }
+
+        private void CorpseCollector(List<Faction> factions)
+        {
+            foreach (var faction in factions)
+            {
+                foreach (var squad in faction.Squads)
+                {
+                    for (int warriorIndex = 0; warriorIndex < squad.Warriors.Count; warriorIndex++)
+                    {
+                        if (squad.Warriors[warriorIndex].HP == 0)
+                        {
+                            squad.Warriors.RemoveAt(warriorIndex);
+                        }
+                    }
+                }
+            }
+        }
+
+        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex, int squadIndex)
+        {
+            var warriorIndex = ForBattle.Random(factions[factionIndex].Squads[squadIndex].Warriors.Count - 1);
+            return new int[] { factionIndex, squadIndex, warriorIndex };
+        }
+
+        public int[] SelectRandomWarrior(List<Faction> factions, int factionIndex)
+        {
+            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
+            return SelectRandomWarrior(factions, factionIndex, squadIndex);
+        }
+
+        public int[] SelectRandomWarrior(List<Faction> factions)
+        {
+            var factionIndex = ForBattle.Random(factions.Count - 1);
+            return SelectRandomWarrior(factions, factionIndex);
+        }
+
+        public int[] SelectRandomSquad(List<Faction> factions, int factionIndex)
+        {
+            var squadIndex = ForBattle.Random(factions[factionIndex].Squads.Count - 1);
+            return new int[] { factionIndex, squadIndex };
+        }
+
+        public int[] SelectRandomSquad(List<Faction> factions)
+        {
+            var factionIndex = ForBattle.Random(factions.Count - 1);
+            return SelectRandomSquad(factions, factionIndex);
+        }
+
+        private void ChargeClassAbilities(List<Faction> factions)
+        {
+            foreach (var faction in factions)
+            {
+                foreach (var squad in faction.Squads)
+                {
+                    foreach (var warrior in squad.Warriors)
+                    {
+                        warrior.AbilityRecoveryCounter = warrior.BetweenAbility;
+                    }
+                }
+            }
+        }
+
+        private Warrior IfEndTurn(Squad squad, ref int warriorStepCounter, ref int squadWarriorIndex)
+        {
+            if (warriorStepCounter == 2)
+            {
+                warriorStepCounter = 0;
+                if (squad.Warriors[squadWarriorIndex].AbilityRecoveryCounter < squad.Warriors[squadWarriorIndex].BetweenAbility)
+                {
+                    squad.Warriors[squadWarriorIndex].AbilityRecoveryCounter++;
+                }
+                IncreaseSquadWarriorIndex(squad, ref squadWarriorIndex);
+            }
+            return squad.Warriors[squadWarriorIndex];
+        }
+
+        private Warrior IfSomeoneDied(Squad squad, ref int warriorStepCounter, ref int squadWarriorIndex)
+        {
+            for (int index = 0; index < squad.Warriors.Count; index++)
+            {
+                if (squad.Warriors[index].HP == 0)
+                {
+                    if (index < squadWarriorIndex)
+                    {
+                        squadWarriorIndex--;
+                    }
+                    else if (index == squadWarriorIndex)
+                    {
+                        warriorStepCounter = 0;
+                    }
+                    squad.Warriors.RemoveAt(index);
+                    index--;
+                }
+            }
+            if (squad.Warriors.Count > 0)
+            {
+                VerifySquadWarriorIndex(squad, ref squadWarriorIndex);
+                return IfEndTurn(squad, ref warriorStepCounter, ref squadWarriorIndex);
+            }
+            else return null;
         }
 
         private Warrior FindMinHPWarrior(Squad squad)
@@ -637,6 +650,32 @@ namespace FantasyBattle
             return warriorWithMinHP;
         }
 
+        private int FactionNotEmpty(Faction faction)
+        {
+            for (int squadIndex = 0; squadIndex < faction.Squads.Count; squadIndex++)
+            {
+                if (faction.Squads[squadIndex].Warriors.Count > 0) return squadIndex;
+            }
+            return -1;
+        }
+
+        private void VerifySquadWarriorIndex(Squad squad, ref int warriorIndex)
+        {
+            if (warriorIndex >= squad.Warriors.Count) warriorIndex = 0;
+        }
+
+        private void IncreaseSquadWarriorIndex(Squad squad, ref int warriorIndex)
+        {
+            if (warriorIndex < squad.Warriors.Count - 1) warriorIndex++;
+            else warriorIndex = 0;
+        }
+
+        private void DecreaseSquadWarriorIndex(Squad squad, ref int warriorIndex)
+        {
+            if (warriorIndex > 0) warriorIndex--;
+            else warriorIndex = squad.Warriors.Count - 1;
+        }
+
         private void HighlightTextSpecial()
         {
             Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -650,38 +689,6 @@ namespace FantasyBattle
             Console.WriteLine($"{name} погиб.");
             Console.ResetColor();
         }
-
-        public void ConsoleFactionsBattle(List<Faction> factions)
-        {
-            var firstFactionSquadIndex = FactionNotEmpty(factions[0]);
-            var secondFactionSquadIndex = FactionNotEmpty(factions[1]);
-
-            if (firstFactionSquadIndex == -1 || secondFactionSquadIndex == -1)
-            {
-                Console.WriteLine("Не с кем сражаться. Одна из фракций (или обе) пуста.");
-            }
-            else
-            {
-                Console.WriteLine($"Фракция \"{factions[0].Name}\" сражается с фракцией \"{factions[1].Name}\":\n");
-                while (firstFactionSquadIndex != -1 && secondFactionSquadIndex != -1)
-                {
-                    ConsoleBattleSquadOnSquad(factions, firstFactionSquadIndex, secondFactionSquadIndex);
-                    firstFactionSquadIndex = FactionNotEmpty(factions[0]);
-                    secondFactionSquadIndex = FactionNotEmpty(factions[1]);
-                }
-            }
-            if (FactionNotEmpty(factions[0]) != -1) Console.WriteLine($"Победила фракция \"{factions[0].Name}\"!\n");
-            else Console.WriteLine($"Победила фракция \"{factions[1].Name}\"!\n");
-        }
-
-        private int FactionNotEmpty(Faction faction)
-        {
-            for (int squadIndex = 0; squadIndex < faction.Squads.Count; squadIndex++)
-            {
-                if (faction.Squads[squadIndex].Warriors.Count > 0) return squadIndex;
-            }
-            return -1;
-        }
-
+                
     }
 }
